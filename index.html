@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Salary System — Reviewer & Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14;
+  --surface: #141720;
+  --surface2: #1a1e2e;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8eaf0;
+  --muted: #7a82a0;
+  --dim: #4a5070;
+  --accent: #4f9cf9;
+  --accent2: #a78bfa;
+  --green: #34d399;
+  --red: #f87171;
+  --amber: #fbbf24;
+  --cyan: #22d3ee;
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* GRID BG */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(79,156,249,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,156,249,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* HEADER */
+header {
+  position: relative;
+  z-index: 10;
+  padding: 3rem 0 2rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.header-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  border: 1px solid rgba(79,156,249,0.3);
+  padding: 4px 12px;
+  border-radius: 2px;
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+h1 {
+  font-family: var(--mono);
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+h1 span { color: var(--accent); }
+.subtitle {
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* NAV */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13,15,20,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.nav-btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  padding: 1rem 1.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* LAYOUT */
+.container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
+.section { display: none; animation: fadeUp 0.3s ease; }
+.section.active { display: block; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* SECTION HEADING */
+.sec-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.75rem;
+}
+.sec-head h2 {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.sec-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: rgba(79,156,249,0.1);
+  border: 1px solid rgba(79,156,249,0.25);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+/* REVIEW CARDS */
+.r-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.r-card:hover { border-color: var(--border2); }
+.r-header {
+  padding: 1rem 1.25rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.t-join  { background: rgba(34,211,238,0.12); color: var(--cyan); border: 1px solid rgba(34,211,238,0.25); }
+.t-tx    { background: rgba(251,191,36,0.12); color: var(--amber); border: 1px solid rgba(251,191,36,0.25); }
+.t-proc  { background: rgba(167,139,250,0.12); color: var(--accent2); border: 1px solid rgba(167,139,250,0.25); }
+.t-fn    { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+.t-adv   { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+.r-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.r-task  { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-left: auto; }
+.r-body  { padding: 1.25rem; }
+pre {
+  background: #0a0c11;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: 1rem 1.25rem;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  color: #c9d1f0;
+}
+.kw { color: #7eb6ff; }
+.fn-c { color: #c9a6ff; }
+.str { color: #7ee8a2; }
+.cmt { color: #4a5070; font-style: italic; }
+.num-c { color: var(--amber); }
+.explain {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.7;
+  background: var(--surface2);
+  border-radius: 4px;
+  padding: 0.875rem 1rem;
+  border-left: 3px solid rgba(79,156,249,0.3);
+}
+.explain strong { color: var(--accent); font-weight: 500; }
+
+/* QUIZ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+.stat-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+}
+.stat-n { font-family: var(--mono); font-size: 2rem; font-weight: 700; color: var(--text); }
+.stat-n.green { color: var(--green); }
+.stat-l { font-size: 11px; color: var(--dim); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+.progress-bar {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  margin-bottom: 1.75rem;
+  overflow: hidden;
+}
+.progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.5s ease; }
+
+.q-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s;
+}
+.q-card.done { border-color: var(--border2); }
+.q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.q-num { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.q-text { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 1rem; line-height: 1.5; }
+.opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--muted);
+  transition: all 0.15s;
+  line-height: 1.45;
+}
+.opt:hover:not(.locked) { border-color: var(--border2); color: var(--text); background: var(--surface2); }
+.opt-letter {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  min-width: 18px;
+  padding-top: 1px;
+}
+.opt.selected { border-color: rgba(79,156,249,0.4); color: var(--text); background: rgba(79,156,249,0.06); }
+.opt.selected .opt-letter { color: var(--accent); }
+.opt.correct { border-color: rgba(52,211,153,0.5) !important; background: rgba(52,211,153,0.08) !important; color: var(--green) !important; }
+.opt.correct .opt-letter { color: var(--green) !important; }
+.opt.wrong { border-color: rgba(248,113,113,0.5) !important; background: rgba(248,113,113,0.08) !important; color: var(--red) !important; }
+.opt.wrong .opt-letter { color: var(--red) !important; }
+.opt.reveal { border-color: rgba(52,211,153,0.3) !important; background: rgba(52,211,153,0.05) !important; color: #5ebd95 !important; }
+.opt.locked { cursor: default; }
+
+.check-btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  background: rgba(79,156,249,0.1);
+  color: var(--accent);
+  border: 1px solid rgba(79,156,249,0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 8px;
+}
+.check-btn:hover { background: rgba(79,156,249,0.18); }
+.check-btn:disabled { opacity: 0.35; cursor: default; }
+
+.feedback {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.55;
+  display: none;
+}
+.fb-ok { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.2); color: #5ebd95; }
+.fb-no { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); color: #e08080; }
+.fb-icon { font-weight: 700; margin-right: 4px; }
+
+/* FINAL */
+.final-step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.step-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.step-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.step-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+textarea {
+  width: 100%;
+  min-height: 150px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: #0a0c11;
+  color: #c9d1f0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.875rem 1rem;
+  line-height: 1.7;
+  resize: vertical;
+  transition: border-color 0.15s;
+}
+textarea:focus { outline: none; border-color: rgba(79,156,249,0.4); }
+textarea::placeholder { color: var(--dim); }
+
+.submit-btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 12px 28px;
+  background: rgba(79,156,249,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(79,156,249,0.35);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: block;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+.submit-btn:hover { background: rgba(79,156,249,0.2); border-color: rgba(79,156,249,0.6); }
+
+.hint { font-size: 12px; color: var(--dim); text-align: center; margin-top: 10px; }
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  border-top: 1px solid var(--border);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  position: relative;
+  z-index: 1;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">Database Systems // SQL Review</div>
+  <h1>SQL <span>Salary</span> Management</h1>
+  <p class="subtitle">Study JOINs, Transactions, Stored Procedures & Functions — then test yourself.</p>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="showTab('review',this)">01 / Reviewer</button>
+  <button class="nav-btn" onclick="showTab('quiz',this)">02 / Quiz (1–20)</button>
+  <button class="nav-btn" onclick="showTab('final',this)">03 / Final Challenge</button>
+</nav>
+
+<div class="container">
+
+<!-- =================== REVIEWER =================== -->
+<div id="review" class="section active">
+
+  <div class="sec-head">
+    <span class="sec-num">PART 1</span>
+    <h2>Data Retrieval — JOINs</h2>
+  </div>
+
+  <div class="r-card">
+    <div class="r-header">
+      <span class="tag t-join">JOIN</span>
+      <span class="r-title">Task 1 — INNER JOIN</span>
+      <span class="r-task">TASK 01</span>
+    </div>
+    <div class="r-body">
+      <pre><span class="kw">SELECT</span> e.employee_name, e.salary, d.department_name
+<span class="kw">FROM</span> employees e
+<span class="kw">INNER JOIN</span> departments d
+  <span class="kw">ON</span> e.department_id = d.department_id;</pre>
+      <div class="explain"><strong>How to get this:</strong> Use <code>INNER JOIN</code> when you only want rows where both tables have a match. Employees without a department, and departments with no employees, are both excluded. Think of it as the intersection of two sets.</div>
+    </div>
+  </div>
+
+  <div class="r-card">
+    <div class="r-header">
+      <span class="tag t-join">JOIN</span>
+      <span class="r-title">Task 2 — LEFT JOIN: All employees</span>
+      <span class="r-task">TASK 02</span>
+    </div>
+    <div class="r-body">
+      <pre><span class="kw">SELECT</span> e.employee_name, e.salary, d.department_name
+<span class="kw">FROM</span> employees e
+<span class="kw">LEFT JOIN</span> departments d
+  <span class="kw">ON</span> e.department_id = d.department_id;</pre>
+      <div class="explain"><strong>How to get this:</strong> <code>LEFT JOIN</code> keeps ALL rows from the LEFT table (employees). If an employee has no matching department, department_name will be <code>NULL</code>. The left table is always "preserved" completely.</div>
+    </div>
+  </div>
+
+  <div class="r-card">
+    <div class="r-header">
+      <span class="tag t-join">JOIN</span>
+      <span class="r-title">Task 3 — RIGHT JOIN: All departments</span>
+      <span class="r-task">TASK 03</span>
+    </div>
+    <div class="r-body">
+      <pre><span class="kw">SELECT</span> e.employee_name, e.salary, d.department_name
+<span class="kw">FROM</span> employees e
+<span class="kw">RIGHT JOIN</span> departments d
+  <span class="kw">ON</span> e.department_id = d.department_id;</pre>
+      <div class="explain"><strong>How to get this:</strong> <code>RIGHT JOIN</code> keeps ALL rows from the RIGHT table (departments). Departments that have no employees show NULL for all employee columns. Use this to audit empty departments.</div>
+    </div>
+  </div>
+
+  <div class="sec-head" style="margin-top:2.5rem">
+    <span class="sec-num">PART 2</span>
+    <h2>Transaction Processing</h2>
+  </div>
+
+  <div class="r-card">
+    <div class="r-header">
+      <span class="tag t-tx">Transaction</span>
+      <span class="r-title">Task 4 — Salary Transfer with COMMIT</span>
+      <span class="r-task">TASK 04</span>
+    </div>
+    <div class="r-body">
+      <pre><span class="kw">START TRANSACTION</span>;
+
+<span class="kw">UPDATE</span> employees
+  <span class="kw">SET</span> salary = salary - <span class="num-c">5000</span>
+  <span class="kw">WHERE</span> employee_id = <span class="num-c">1</span>;
+
+<span class="kw">UPDATE</span> employees
+  <span class="kw">SET</span> salary = salary + <span class="num-c">5000</span>
+  <span class="kw">WHERE</span> employee_id = <span class="num-c">2</span>;
+
+<span class="kw">COMMIT</span>;</pre>
+      <div class="explain"><strong>How to get this:</strong> <code>START TRANSACTION</code> opens a transaction block. All changes inside are temporary until <code>COMMIT</code> permanently saves them. This ensures both the deduction and addition happen together — atomically.</div>
+    </div>
+  </div>
+
+  <div class="r-card">
+    <div class="r-header">
+      <span class="tag t-tx">Transaction</span>
+      <span class="r-title">Task 5 — Failed Transaction with ROLLBACK</span>
+      <span class="r-task">TASK 05</span>
+    </div>
+    <div class="r-body">
+      <pre><span class="kw">START TRANSACTION</span>;
+
+<span class="kw">UPDATE</span> employees
+  <span class="kw">SET</span> salary = salary - <span class="num-c">5000</span>
+  <span class="kw">WHERE</span> employee_id = <span class="num-c">1</span>;
+
+<span class="cmt">-- Error detected here: cancel everything</span>
+<span class="kw">ROLLBACK</span>;</pre>
+      <div class="explain"><strong>How to get this:</strong> <code>ROLLBACK</code> undoes every change made since <code>START TRANSACTION</code>. The salary deduction is reversed completely. The database looks exactly as it did before the transaction started.</div>
+    </div>
+  </div>
+
+  <div class="sec-head" style="margin-top:2.5rem">
+    <span class="sec-num">PART 3</span>
+    <h2>Stored Procedures</h2>
+  </div>
+
+  <div class="r-card">
+    <div class="r-header">
+      <span class="tag t-proc">Procedure</span>
+      <span class="r-title">Task 6 — Create Stored Procedure</span>
+      <span class="r-task">TASK 06</span>
+    </div>
+    <div class="r-body">
+      <pre><span class="kw">DELIMITER</span> $$
+
+<span class="kw">CREATE PROCEDURE</span> <span class="fn-c">transfer_salary</span>(
+  <span class="kw">IN</span> sender_id <span class="kw">INT</span>,
+  <span class="kw">IN</span> receiver_id <span class="kw">INT</span>,
+  <span class="kw">IN</span> amount <span class="kw">DECIMAL</span>(<span class="num-c">10</span>,<span class="num-c">2</span>)
+)
+<span class="kw">BEGIN</span>
+  <span class="kw">START TRANSACTION</span>;
+
+    <span class="kw">UPDATE</span> employees
+      <span class="kw">SET</span> salary = salary - amount
+      <span class="kw">WHERE</span> employee_id = sender_id;
+
+    <span class="kw">UPDATE</span> employees
+      <span class="kw">SET</span> salary = salary + amount
+      <span class="kw">WHERE</span> employee_id = receiver_id;
+
+  <span class="kw">COMMIT</span>;
+<span class="kw">END</span>$$
+
+<span class="kw">DELIMITER</span> ;</pre>
+      <div class="explain"><strong>How to get this:</strong> <code>DELIMITER $$</code> prevents semicolons inside the procedure from ending the statement early. Parameters tagged <code>IN</code> accept values when called. The transaction inside ensures both UPDATEs are atomic.</div>
+    </div>
+  </div>
+
+  <div class="r-card">
+    <div class="r-header">
+      <span class="tag t-proc">Procedure</span>
+      <span class="r-title">Task 7 — Execute Procedure</span>
+      <span class="r-task">TASK 07</span>
+    </div>
+    <div class="r-body">
+      <pre><span class="kw">CALL</span> <span class="fn-c">transfer_salary</span>(<span class="num-c">1</span>, <span class="num-c">2</span>, <span class="num-c">5000.00</span>);</pre>
+      <div class="explain"><strong>How to get this:</strong> Use <code>CALL procedure_name(args)</code> to execute a stored procedure. Here: employee 1 (sender) transfers ₱5,000 to employee 2 (receiver). The procedure handles all the transaction logic internally.</div>
+    </div>
+  </div>
+
+  <div class="sec-head" style="margin-top:2.5rem">
+    <span class="sec-num">PART 4</span>
+    <h2>Stored Function</h2>
+  </div>
+
+  <div class="r-card">
+    <div class="r-header">
+      <span class="tag t-fn">Function</span>
+      <span class="r-title">Task 8 — Total Salary per Department</span>
+      <span class="r-task">TASK 08</span>
+    </div>
+    <div class="r-body">
+      <pre><span class="kw">DELIMITER</span> $$
+
+<span class="kw">CREATE FUNCTION</span> <span class="fn-c">get_dept_total_salary</span>(dept_id <span class="kw">INT</span>)
+<span class="kw">RETURNS DECIMAL</span>(<span class="num-c">15</span>,<span class="num-c">2</span>)
+<span class="kw">DETERMINISTIC</span>
+<span class="kw">BEGIN</span>
+  <span class="kw">DECLARE</span> total <span class="kw">DECIMAL</span>(<span class="num-c">15</span>,<span class="num-c">2</span>);
+
+  <span class="kw">SELECT</span> <span class="fn-c">SUM</span>(salary) <span class="kw">INTO</span> total
+  <span class="kw">FROM</span> employees
+  <span class="kw">WHERE</span> department_id = dept_id;
+
+  <span class="kw">RETURN</span> total;
+<span class="kw">END</span>$$
+
+<span class="kw">DELIMITER</span> ;
+
+<span class="cmt">-- Usage:</span>
+<span class="kw">SELECT</span> <span class="fn-c">get_dept_total_salary</span>(<span class="num-c">1</span>);</pre>
+      <div class="explain"><strong>How to get this:</strong> Functions use <code>RETURNS datatype</code> and end with <code>RETURN value</code>. <code>DECLARE</code> creates a local variable. <code>SELECT ... INTO variable</code> stores the query result. Unlike procedures, functions can be embedded directly in SELECT statements.</div>
+    </div>
+  </div>
+
+  <div class="sec-head" style="margin-top:2.5rem">
+    <span class="sec-num">PART 5</span>
+    <h2>Critical Thinking — Improved Procedure</h2>
+  </div>
+
+  <div class="r-card">
+    <div class="r-header">
+      <span class="tag t-adv">Advanced</span>
+      <span class="r-title">Task 9 — Safe Transfer (Prevent Negative Salary)</span>
+      <span class="r-task">TASK 09</span>
+    </div>
+    <div class="r-body">
+      <pre><span class="kw">DELIMITER</span> $$
+
+<span class="kw">CREATE PROCEDURE</span> <span class="fn-c">safe_transfer</span>(
+  <span class="kw">IN</span> sender_id <span class="kw">INT</span>,
+  <span class="kw">IN</span> receiver_id <span class="kw">INT</span>,
+  <span class="kw">IN</span> amount <span class="kw">DECIMAL</span>(<span class="num-c">10</span>,<span class="num-c">2</span>)
+)
+<span class="kw">BEGIN</span>
+  <span class="kw">DECLARE</span> sender_salary <span class="kw">DECIMAL</span>(<span class="num-c">10</span>,<span class="num-c">2</span>);
+
+  <span class="kw">SELECT</span> salary <span class="kw">INTO</span> sender_salary
+  <span class="kw">FROM</span> employees
+  <span class="kw">WHERE</span> employee_id = sender_id;
+
+  <span class="kw">IF</span> sender_salary >= amount <span class="kw">THEN</span>
+    <span class="kw">START TRANSACTION</span>;
+      <span class="kw">UPDATE</span> employees
+        <span class="kw">SET</span> salary = salary - amount
+        <span class="kw">WHERE</span> employee_id = sender_id;
+
+      <span class="kw">UPDATE</span> employees
+        <span class="kw">SET</span> salary = salary + amount
+        <span class="kw">WHERE</span> employee_id = receiver_id;
+    <span class="kw">COMMIT</span>;
+  <span class="kw">ELSE</span>
+    <span class="kw">ROLLBACK</span>;
+    <span class="kw">SELECT</span> <span class="str">'Error: Insufficient salary balance.'</span> <span class="kw">AS</span> message;
+  <span class="kw">END IF</span>;
+<span class="kw">END</span>$$
+
+<span class="kw">DELIMITER</span> ;</pre>
+      <div class="explain"><strong>How to get this:</strong> Before transferring, <code>SELECT ... INTO sender_salary</code> reads the current balance. The <code>IF</code> block checks if the sender has enough. If not, <code>ELSE</code> triggers <code>ROLLBACK</code> and returns an error message — preventing any negative salary situation.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== QUIZ =================== -->
+<div id="quiz" class="section">
+  <div id="quiz-inner"></div>
+</div>
+
+<!-- =================== FINAL =================== -->
+<div id="final" class="section">
+  <div class="sec-head">
+    <span class="sec-num">CHALLENGE</span>
+    <h2>Build the Complete SQL System</h2>
+  </div>
+  <p style="color:var(--muted);font-size:13.5px;margin-bottom:1.75rem;line-height:1.6">Write all SQL from memory. Each step tests a different concept covered in the reviewer. Submit when done for detailed feedback.</p>
+
+  <div class="final-step">
+    <div class="step-label">Step 01</div>
+    <div class="step-title">CREATE TABLE — Define the employees and departments tables with proper data types and constraints</div>
+    <textarea id="fa1" placeholder="CREATE TABLE departments (
+  department_id INT PRIMARY KEY AUTO_INCREMENT,
+  ...
+);
+
+CREATE TABLE employees (
+  employee_id INT PRIMARY KEY AUTO_INCREMENT,
+  ...
+);"></textarea>
+  </div>
+
+  <div class="final-step">
+    <div class="step-label">Step 02</div>
+    <div class="step-title">JOIN Queries — Write all 3 JOIN types: INNER, LEFT, and RIGHT</div>
+    <textarea id="fa2" placeholder="-- INNER JOIN: employees with departments
+SELECT ...
+
+-- LEFT JOIN: all employees (even without dept)
+SELECT ...
+
+-- RIGHT JOIN: all departments (even without employees)
+SELECT ..."></textarea>
+  </div>
+
+  <div class="final-step">
+    <div class="step-label">Step 03</div>
+    <div class="step-title">Transaction — Transfer ₱5,000 from employee 1 to employee 2, with COMMIT and ROLLBACK scenario</div>
+    <textarea id="fa3" placeholder="-- Successful transfer
+START TRANSACTION;
+...
+COMMIT;
+
+-- Failed transfer
+START TRANSACTION;
+...
+ROLLBACK;"></textarea>
+  </div>
+
+  <div class="final-step">
+    <div class="step-label">Step 04</div>
+    <div class="step-title">Stored Procedure — safe_transfer() with IF check to prevent negative salaries</div>
+    <textarea id="fa4" placeholder="DELIMITER $$
+CREATE PROCEDURE safe_transfer(...)
+BEGIN
+  ...
+END$$
+DELIMITER ;"></textarea>
+  </div>
+
+  <div class="final-step">
+    <div class="step-label">Step 05</div>
+    <div class="step-title">Stored Function — get_dept_total_salary() that returns the total salary for a given department</div>
+    <textarea id="fa5" placeholder="DELIMITER $$
+CREATE FUNCTION get_dept_total_salary(dept_id INT)
+RETURNS DECIMAL(15,2)
+...
+END$$
+DELIMITER ;"></textarea>
+  </div>
+
+  <button class="submit-btn" onclick="submitFinal()">Submit for Claude Review →</button>
+  <p class="hint">Your answers will be sent to Claude for syntax checking, correctness feedback, and improvement tips.</p>
+</div>
+
+</div>
+
+<footer>SQL Salary Management System Reviewer &nbsp;·&nbsp; Database Systems &nbsp;·&nbsp; Built for learning</footer>
+
+<script>
+const QUESTIONS = [
+  {q:"What does INNER JOIN return?",opts:["All rows from the left table","All rows from both tables regardless of match","Only rows with matching values in both tables","All rows from the right table"],ans:2,tag:"JOIN",exp:"INNER JOIN filters out non-matching rows from both tables — only matched pairs appear in the result set."},
+  {q:"An employee has no department_id assigned. Which JOIN will still include that employee in the results?",opts:["INNER JOIN","RIGHT JOIN with employees on right","LEFT JOIN with employees on left","CROSS JOIN"],ans:2,tag:"JOIN",exp:"LEFT JOIN preserves ALL rows from the left table (employees). Unmatched rows get NULL for the right table's columns."},
+  {q:"You need to find departments that currently have zero employees. Which JOIN is most appropriate?",opts:["INNER JOIN","LEFT JOIN with employees on left","RIGHT JOIN with employees on left and departments on right","NATURAL JOIN"],ans:2,tag:"JOIN",exp:"RIGHT JOIN keeps all departments (right table). Empty departments show NULL for employee columns — filter with WHERE employee_id IS NULL to isolate them."},
+  {q:"What does COMMIT do in a transaction?",opts:["Cancels all changes since START TRANSACTION","Permanently saves all changes to the database","Starts a new nested transaction","Acquires a table lock"],ans:1,tag:"Transaction",exp:"COMMIT finalizes and permanently writes all changes made since START TRANSACTION. Before COMMIT, changes are visible only in the current session."},
+  {q:"A salary deduction was started but an error was found mid-way. Which command cancels the entire operation?",opts:["COMMIT","SAVEPOINT","ROLLBACK","UNDO"],ans:2,tag:"Transaction",exp:"ROLLBACK reverses every change made since the last START TRANSACTION, restoring the database to its pre-transaction state."},
+  {q:"What is the correct order of commands for a safe salary transfer transaction?",opts:["COMMIT → UPDATE → START TRANSACTION","START TRANSACTION → UPDATE → COMMIT","UPDATE → START TRANSACTION → COMMIT","ROLLBACK → UPDATE → COMMIT"],ans:1,tag:"Transaction",exp:"The correct sequence: START TRANSACTION opens the block, DML statements modify data, then COMMIT saves permanently or ROLLBACK cancels."},
+  {q:"Which keyword declares an input parameter in a stored procedure?",opts:["OUT","PARAM","IN","VAR"],ans:2,tag:"Procedure",exp:"IN parameters pass values INTO the procedure. OUT returns values from it. INOUT does both. IN is used for values the procedure reads but does not modify."},
+  {q:"Why is DELIMITER $$ used when creating a stored procedure in MySQL?",opts:["To rename the current database","To prevent semicolons inside the procedure body from ending the CREATE statement too early","To improve execution speed","To declare global variables"],ans:1,tag:"Procedure",exp:"MySQL uses ; as its default statement terminator. DELIMITER $$ changes it so the entire procedure body is parsed as one unit, not broken at internal semicolons."},
+  {q:"How do you execute a stored procedure named 'transfer_salary' in MySQL?",opts:["EXEC transfer_salary(1,2,5000)","RUN transfer_salary(1,2,5000)","CALL transfer_salary(1,2,5000)","START transfer_salary(1,2,5000)"],ans:2,tag:"Procedure",exp:"In MySQL, stored procedures are invoked using the CALL keyword followed by the procedure name and its arguments in parentheses."},
+  {q:"What is the key difference between a stored procedure and a stored function?",opts:["Procedures use SELECT; functions use UPDATE","Functions return a single value and can be used inside a SELECT expression; procedures cannot be embedded that way","Procedures are always faster than functions","There is no practical difference"],ans:1,tag:"Function",exp:"A function uses RETURNS datatype and RETURN value, making it embeddable in SQL expressions like SELECT. Procedures perform actions but cannot be used inside expressions."},
+  {q:"Which SQL syntax stores a query result into a local variable inside a function or procedure?",opts:["SET variable = SELECT ...","DECLARE variable INTO SELECT ...","SELECT column INTO variable FROM table WHERE ...","INSERT variable SELECT ..."],ans:2,tag:"Function",exp:"SELECT column INTO variable_name FROM table WHERE condition; is the MySQL syntax to assign a scalar query result to a declared local variable."},
+  {q:"What keyword creates a local variable inside a stored procedure or function body?",opts:["LET","VAR","SET","DECLARE"],ans:3,tag:"Function",exp:"DECLARE variable_name DATATYPE; creates a local variable within a BEGIN...END block. It must appear before any executable statements in that block."},
+  {q:"In the safe_transfer procedure, what happens when the sender's salary is LESS than the transfer amount?",opts:["The transfer proceeds and salary goes negative","The procedure executes ROLLBACK and returns an error message","MySQL automatically cancels only the sender's UPDATE","The receiver's salary is reduced to compensate"],ans:1,tag:"Advanced",exp:"An IF check compares sender_salary >= amount. When the balance is insufficient, the ELSE branch runs ROLLBACK and returns an error message — preventing negative salaries."},
+  {q:"Which SQL aggregate function computes the total of all salaries in a department?",opts:["COUNT(salary)","AVG(salary)","SUM(salary)","TOTAL(salary)"],ans:2,tag:"Function",exp:"SUM(column) adds all non-NULL values in a numeric column. It is the standard function for computing salary totals, budget sums, or any cumulative numeric figure."},
+  {q:"What does NULL represent when it appears in the result of a JOIN?",opts:["A salary value of zero","A deleted employee record","No matching row was found in the joined table for that row","A query syntax error"],ans:2,tag:"JOIN",exp:"NULL in a JOIN result means no matching row existed in the joined table. This is the expected result for unmatched rows in LEFT JOIN and RIGHT JOIN operations."},
+  {q:"You run START TRANSACTION, execute two UPDATEs, then the server crashes before COMMIT. What happens to the data?",opts:["Both UPDATEs are saved permanently","Only the first UPDATE is saved","Both UPDATEs are automatically rolled back on recovery","The database becomes corrupted and requires repair"],ans:2,tag:"Transaction",exp:"Transactions are atomic. If COMMIT never executes, the database engine automatically rolls back all uncommitted changes upon recovery — the data is safe and consistent."},
+  {q:"Which of the following correctly uses a stored function inside a SQL query?",opts:["CALL get_dept_total_salary(1)","EXEC get_dept_total_salary(1)","SELECT get_dept_total_salary(1)","RUN get_dept_total_salary(1)"],ans:2,tag:"Function",exp:"Functions are embedded directly in SQL expressions. SELECT function_name(args) returns the value inline. Only procedures require CALL."},
+  {q:"What clause in a stored function definition specifies the data type of the value it will return?",opts:["DECLARE RETURN","OUTPUT datatype","RETURNS datatype","GIVE BACK datatype"],ans:2,tag:"Function",exp:"RETURNS datatype (e.g. RETURNS DECIMAL(15,2)) is required in a function definition. It tells MySQL what type the RETURN statement will produce."},
+  {q:"Which combination shows ALL employees AND ALL departments — including those with no match on either side?",opts:["INNER JOIN","LEFT JOIN only","RIGHT JOIN only","LEFT JOIN UNION ALL RIGHT JOIN WHERE the other side IS NULL"],ans:3,tag:"JOIN",exp:"MySQL lacks native FULL OUTER JOIN. The standard workaround is LEFT JOIN UNION ALL RIGHT JOIN WHERE left.id IS NULL — this captures all unmatched rows from both tables."},
+  {q:"In a transaction, the first UPDATE succeeds but the second UPDATE fails. What is the correct action to keep data consistent?",opts:["COMMIT only the first UPDATE","ROLLBACK to undo both UPDATEs including the successful one","Leave the database with the partial change","Use SAVEPOINT to keep just the first UPDATE"],ans:1,tag:"Transaction",exp:"Both operations must succeed or fail together (atomicity). If the second UPDATE fails, ROLLBACK must undo the first UPDATE too — otherwise money is deducted but never credited, corrupting the data."}
+];
+
+let answers = new Array(20).fill(null);
+let checked = new Array(20).fill(false);
+
+function buildQuiz() {
+  let html = `<div class="sec-head"><span class="sec-num">20 QUESTIONS</span><h2>Test Your Knowledge</h2></div>`;
+  html += `<div class="stats-row">
+    <div class="stat-box"><div class="stat-n" id="s-ans">0</div><div class="stat-l">Answered</div></div>
+    <div class="stat-box"><div class="stat-n green" id="s-cor">0</div><div class="stat-l">Correct</div></div>
+    <div class="stat-box"><div class="stat-n" id="s-tot">20</div><div class="stat-l">Total</div></div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="pfill" style="width:0%"></div></div>`;
+  QUESTIONS.forEach((q,i) => {
+    const tc = q.tag==='JOIN'?'t-join':q.tag==='Transaction'?'t-tx':q.tag==='Procedure'?'t-proc':q.tag==='Function'?'t-fn':'t-adv';
+    html += `<div class="q-card" id="qc-${i}">
+      <div class="q-meta"><span class="q-num">Q${i+1}</span><span class="tag ${tc}">${q.tag}</span></div>
+      <div class="q-text">${q.q}</div>
+      ${q.opts.map((o,j)=>`<div class="opt" id="opt-${i}-${j}" onclick="pick(${i},${j})"><span class="opt-letter">${String.fromCharCode(65+j)}</span>${o}</div>`).join('')}
+      <button class="check-btn" id="btn-${i}" onclick="checkQ(${i})">Check answer</button>
+      <div class="feedback" id="fb-${i}"></div>
+    </div>`;
+  });
+  document.getElementById('quiz-inner').innerHTML = html;
+}
+
+function pick(qi, oi) {
+  if (checked[qi]) return;
+  answers[qi] = oi;
+  for (let j=0;j<4;j++) {
+    const el = document.getElementById(`opt-${qi}-${j}`);
+    el.classList.remove('selected');
+    el.style.fontWeight = '';
+  }
+  const sel = document.getElementById(`opt-${qi}-${oi}`);
+  sel.classList.add('selected');
+  sel.style.fontWeight = '500';
+}
+
+function checkQ(qi) {
+  if (answers[qi] === null) { alert('Select an answer first.'); return; }
+  if (checked[qi]) return;
+  checked[qi] = true;
+  const q = QUESTIONS[qi];
+  const ok = answers[qi] === q.ans;
+  for (let j=0;j<4;j++) {
+    const el = document.getElementById(`opt-${qi}-${j}`);
+    el.classList.remove('selected');
+    el.classList.add('locked');
+    if (j === q.ans) el.classList.add(ok ? 'correct' : 'reveal');
+    else if (j === answers[qi]) el.classList.add('wrong');
+  }
+  const fb = document.getElementById(`fb-${qi}`);
+  fb.style.display = 'block';
+  fb.className = 'feedback ' + (ok ? 'fb-ok' : 'fb-no');
+  fb.innerHTML = `<span class="fb-icon">${ok?'✓':'✗'}</span>${ok ? 'Correct! ' : 'Incorrect. '}${q.exp}`;
+  const btn = document.getElementById(`btn-${qi}`);
+  btn.disabled = true;
+  document.getElementById(`qc-${qi}`).classList.add('done');
+  updateStats();
+}
+
+function updateStats() {
+  const ans = checked.filter(Boolean).length;
+  const cor = QUESTIONS.map((q,i) => checked[i] && answers[i]===q.ans).filter(Boolean).length;
+  document.getElementById('s-ans').textContent = ans;
+  document.getElementById('s-cor').textContent = cor;
+  document.getElementById('pfill').style.width = (cor/20*100).toFixed(0)+'%';
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id==='quiz' && !document.getElementById('quiz-inner').innerHTML) buildQuiz();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function submitFinal() {
+  const steps = ['fa1','fa2','fa3','fa4','fa5'].map(id=>document.getElementById(id).value.trim());
+  if (steps.every(s=>!s)) { alert('Please write at least one SQL section before submitting.'); return; }
+  const labels = ['CREATE tables','JOIN queries (INNER, LEFT, RIGHT)','Transaction (COMMIT + ROLLBACK)','safe_transfer stored procedure','get_dept_total_salary function'];
+  let msg = 'Please review my SQL answers for the Company Salary Management System final challenge:\n\n';
+  steps.forEach((s,i) => { msg += `**Step ${i+1} — ${labels[i]}:**\n${s||'(left blank)'}\n\n`; });
+  msg += 'For each step: check correctness, flag syntax errors, verify proper use of keywords (JOIN, START TRANSACTION, COMMIT, ROLLBACK, DELIMITER, PROCEDURE, FUNCTION, DECLARE, IF/ELSE), and suggest improvements.';
+  if (typeof sendPrompt === 'function') sendPrompt(msg);
+  else alert('Open this file in the Claude.ai chat to get feedback on your answers!');
+}
+</script>
+</body>
+</html>
